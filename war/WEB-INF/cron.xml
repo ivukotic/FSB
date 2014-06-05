@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cronentries>
+  <cron>
+    <url>/UpdateFromAGIS</url>
+    <description>Updates site coordinates every night.</description>
+    <!-- <schedule>every day 00:30</schedule> -->
+    <schedule>every 2 hours</schedule>
+  </cron>
+  
+  <cron>
+    <url>/wancostdelete</url>
+    <description>deletes old measurements.</description>
+    <schedule>every 1 hours</schedule> 
+  </cron>
+  
+  <cron>
+    <url>/wancostresumming</url>
+    <description>creates first averaged table.</description>
+    <schedule>every 30 minutes</schedule> 
+  </cron>
+
+    
+  <cron>
+    <url>/wancostresumming1h</url>
+    <description>creates 2nd averaged table.</description>
+    <schedule>every 1 hours</schedule> 
+  </cron>
+  
+
+  <cron>
+    <url>/wancostresumming3h</url>
+    <description>creates 3rd averaged table.</description>
+    <schedule>every 3 hours</schedule> 
+  </cron>
+  
+
+  <cron>
+    <url>/wancostresumming6h</url>
+    <description>creates 4th averaged table.</description>
+    <schedule>every 6 hours</schedule> 
+  </cron>
+  
+ 
+  <cron>
+    <url>/wancostresumming12h</url>
+    <description>creates 5th averaged table.</description>
+    <schedule>every 12 hours</schedule> 
+  </cron>
+
+  <cron>
+    <url>/wancostresumming24h</url>
+    <description>creates 6th averaged table.</description>
+    <schedule>every 24 hours</schedule> 
+  </cron>
+  
+<!--   <cron>
+    <url>/weeklyreport</url>
+    <description>Mail out a weekly report</description>
+    <schedule>every 2 minutes</schedule>
+    <schedule>every monday 08:30</schedule>
+    <timezone>America/New_York</timezone>
+  </cron>
+  <cron>
+    <url>/weeklyreport</url>
+    <description>Mail out a weekly report</description>
+    <schedule>every monday 08:30</schedule>
+    <timezone>America/New_York</timezone>
+    <target>version-2</target> 
+  </cron>-->
+</cronentries>
