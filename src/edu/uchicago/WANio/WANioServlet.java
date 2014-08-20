@@ -7,8 +7,13 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.TimeZone;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServlet;
@@ -29,7 +34,7 @@ import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.SortDirection;
 
 
-@SuppressWarnings("serial")
+@SuppressWarnings("serial") 
 public class WANioServlet extends HttpServlet {
 	
 	private static final Logger log = Logger.getLogger(WANioServlet.class.getName());
@@ -75,7 +80,7 @@ public class WANioServlet extends HttpServlet {
 		// don't refresh if done less then 5 min ago
 		if (new Date().getTime()-lastREUpdate < 5*60*1000) return;
 		lastREUpdate=new Date().getTime();
-		// not using any endpoints last updated more then 10 hours ago. (some could change name or got disabled.)
+		// not using any redirectors last updated more then 10 hours ago. (some could change name or got disabled.)
 		Date currTime = new Date(new Date().getTime() - 10 * 3600 * 1000);
 		Filter onRecentREs = new Query.FilterPredicate("timestamp", FilterOperator.GREATER_THAN, currTime);
 		Query q = new Query("redirector").setFilter(onRecentREs);
@@ -84,7 +89,7 @@ public class WANioServlet extends HttpServlet {
 	}
 	
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-//		log.warning("Got a POST...");
+		log.warning("Got a POST...");
 		
 		String endpointName = req.getParameter("epName");
 		if (endpointName!=null){
@@ -128,7 +133,7 @@ public class WANioServlet extends HttpServlet {
 			updateRedirectors();
 			
 			for (Entity redirector:lREs){
-				if (endpointName.equals(redirector.getKey().getName() )){
+				if (redirectorName.equals(redirector.getKey().getName() )){
 				
 					Entity result = new Entity("result_redirector", redirector.getKey());
 
@@ -148,11 +153,12 @@ public class WANioServlet extends HttpServlet {
 						result.setProperty("downstream", false);
 					
 					datastore.put(result);
-
-					// log.info(endpointName + '\n' + endpointStatus + "\n" + endpointAddress + '\n');
+					
+					log.warning(redirectorName + '\n' + redirectorStatus + '\n');
 				}
 			}
 		}		
+
 
 
 	}
@@ -174,23 +180,101 @@ public class WANioServlet extends HttpServlet {
 			return;
 		}
 
+		if (req.getParameter("endpoint")!=null){
+			updateEndpoints();
+			int sites=lEPs.size(); 
 		
-		updateEndpoints();
-		int sites=lEPs.size(); 
+			String res="";
+			Query q = new Query("result").addSort("timestamp", SortDirection.DESCENDING);
+			PreparedQuery pq = datastore.prepare(q);
+			List<Entity> lRes=pq.asList(FetchOptions.Builder.withLimit(sites));
 		
-		String res="";
-		Query q = new Query("result").addSort("timestamp", SortDirection.DESCENDING);
-		PreparedQuery pq = datastore.prepare(q);
-		List<Entity> lRes=pq.asList(FetchOptions.Builder.withLimit(sites));
+			for(Entity result:lRes){
+				String na=result.getParent().getName();
+				res+=na+"\t"+result.getProperty("direct")+"\t"+result.getProperty("upstream")+"\t"+result.getProperty("downstream")+"\t"+result.getProperty("x509")+"\n";
+			}
+			resp.getWriter().println(res);
+			return;
+		}
+
+		if (req.getParameter("redirector")!=null){
+			updateRedirectors();
+			int sites=lREs.size(); 
 		
-		for(Entity result:lRes){
-			String na=result.getParent().getName();
-			res+=na+"\t"+result.getProperty("direct")+"\t"+result.getProperty("upstream")+"\t"+result.getProperty("downstream")+"\t"+result.getProperty("x509")+"\n";
+			String res="";
+			Query q = new Query("result_redirector").addSort("timestamp", SortDirection.DESCENDING);
+			PreparedQuery pq = datastore.prepare(q);
+			List<Entity> lRes=pq.asList(FetchOptions.Builder.withLimit(sites));
+		
+			for(Entity result:lRes){
+				String na=result.getParent().getName();
+				res+=na.toUpperCase()+"\t"+result.getProperty("upstream")+"\t"+result.getProperty("downstream")+"\t"+result.getProperty("can not check")+"\n";
+			}
+			resp.getWriter().println(res);
+			return;
 		}
 		
-
-		resp.getWriter().println(res);
 		
+		if(req.getParameter("service") != null) {
+			log.warning("data for stability...");
+
+			String ser=req.getParameter("service");
+			Integer ts=Integer.parseInt(req.getParameter("timescale"));
+			
+			updateEndpoints();
+			int sites=lEPs.size(); 
+			
+			String res="";
+			Query q = new Query("result").addSort("timestamp", SortDirection.DESCENDING);
+			PreparedQuery pq = datastore.prepare(q);
+			List<Entity> lRes=pq.asList(FetchOptions.Builder.withLimit(sites*ts));
+		
+			List<String> eps=new ArrayList<String>();
+			List<Calendar> tss=new ArrayList<Calendar>();
+			ListIterator<Entity> li = lRes.listIterator(lRes.size());
+			while(li.hasPrevious()){
+				Entity result=li.previous();
+				String na=result.getParent().getName();
+				Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+				cal.setTime((Date) result.getProperty("timestamp")); 
+				cal.add(Calendar.HOUR_OF_DAY, +1 ); // move to CERN time
+				cal.set(Calendar.MINUTE,0);
+				cal.set(Calendar.SECOND,0);
+				cal.set(Calendar.MILLISECOND,0);
+				if (!eps.contains(na)) eps.add(na);
+				if (!tss.contains(cal)) tss.add(cal);
+			}
+			res+=eps.size()+"\t"+tss.size()+"\n";
+			for (String s : eps) res+=s+'\t'; 
+			res+='\n';
+			String dateFormat = "yyyy-MM-dd";
+			String hourFormat = "HH00";
+			SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+			SimpleDateFormat shf = new SimpleDateFormat(hourFormat);
+			for (Calendar s : tss) {
+				Date date = s.getTime();
+				sdf.setTimeZone(s.getTimeZone());
+				shf.setTimeZone(s.getTimeZone());
+			    String fDate=sdf.format(date) + "T" + shf.format(date);
+				res+=fDate.toString()+'\t';
+				}
+			res+='\n';
+			
+			for(Entity result:lRes){
+				String na=result.getParent().getName();
+				
+				Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+				cal.setTime((Date) result.getProperty("timestamp")); 
+				cal.add(Calendar.HOUR_OF_DAY, +1 ); // move to CERN time
+				cal.set(Calendar.MINUTE,0);
+				cal.set(Calendar.SECOND,0);
+				cal.set(Calendar.MILLISECOND,0);
+				res += eps.indexOf(na) + "\t" + tss.indexOf(cal);
+				if ((boolean) result.getProperty(ser)) res += "\t1\n"; else res+="\t0\n";
+			}
+			resp.getWriter().println(res);
+			return;
+		}
 		
 		
 

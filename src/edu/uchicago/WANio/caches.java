@@ -26,7 +26,7 @@ public class caches {
 	private static void loadSites() {
 		lSources.clear();
 		lDestinations.clear();
-		Query q = new Query("FAXcost6h").setDistinct(true);
+		Query q = new Query("FAXcost").setDistinct(true);
 		q.addProjection(new PropertyProjection("source", String.class));
 		List<Entity> lRes = datastore.prepare(q).asList(FetchOptions.Builder.withDefaults());
 		for (Entity result : lRes) {
@@ -34,7 +34,7 @@ public class caches {
 			if (res != null)
 				lSources.add(res);
 		}
-		q = new Query("FAXcost6h").setDistinct(true);
+		q = new Query("FAXcost").setDistinct(true);
 		q.addProjection(new PropertyProjection("destination", String.class));
 		lRes = datastore.prepare(q).asList(FetchOptions.Builder.withDefaults());
 		for (Entity result : lRes) {
@@ -47,21 +47,21 @@ public class caches {
 	}
 	
 	public static void reload(){
-		if (new Date().getTime()-refresh.getTime() > 24*3600*1000 || lSources.isEmpty() || lDestinations.isEmpty() ) loadSites();
+		if (new Date().getTime()-refresh.getTime() > 12*3600*1000 || lSources.isEmpty() || lDestinations.isEmpty() ) loadSites();
 	}
 	
-	public static void rewrite(){
-		List<Entity> sou=new ArrayList<Entity>();
-		for (String s:lSources){
-			sou.add(new Entity("source",s));
-		}
-		datastore.put(sou);
-		
-		List<Entity> dest=new ArrayList<Entity>();
-		for (String d:lDestinations){
-			dest.add(new Entity("destination",d));
-		}
-		datastore.put(dest);
-	}
+//	public static void rewrite(){
+//		List<Entity> sou=new ArrayList<Entity>();
+//		for (String s:lSources){
+//			sou.add(new Entity("source",s));
+//		}
+//		datastore.put(sou);
+//		
+//		List<Entity> dest=new ArrayList<Entity>();
+//		for (String d:lDestinations){
+//			dest.add(new Entity("destination",d));
+//		}
+//		datastore.put(dest);
+//	}
 	
 }

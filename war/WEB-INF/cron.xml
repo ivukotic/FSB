@@ -10,7 +10,7 @@
   <cron>
     <url>/wancostdelete</url>
     <description>deletes old measurements.</description>
-    <schedule>every 1 hours</schedule> 
+    <schedule>every 3 hours</schedule> 
   </cron>
   
   <cron>
@@ -51,6 +51,12 @@
     <url>/wancostresumming24h</url>
     <description>creates 6th averaged table.</description>
     <schedule>every 24 hours</schedule> 
+  </cron>
+ 
+  <cron>
+    <url>/UpdateFailover</url>
+    <description>fetch failovers.</description>
+    <schedule>every 4 hours</schedule> 
   </cron>
   
 <!--   <cron>

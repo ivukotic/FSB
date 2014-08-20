@@ -84,7 +84,7 @@ public class WANcostResummingServlet3h extends HttpServlet {
 				result.setProperty("timestamp", currTime);
 				result.setProperty("source", caches.lSources.get(i));
 				result.setProperty("destination", caches.lDestinations.get(j));
-				result.setProperty("rate", linkArr[i][j].getAvg());
+				result.setUnindexedProperty("rate", linkArr[i][j].getAvg());
 				lIns.add(result);
 			}
 		}

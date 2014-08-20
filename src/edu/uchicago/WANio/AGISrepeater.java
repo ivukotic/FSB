@@ -27,16 +27,18 @@ public class AGISrepeater extends HttpServlet {
 	private JSONArray AGISsites=new JSONArray() ;
 	private JSONArray AGISservice=new JSONArray() ;
 	
+	
 	public void init(){
 		reload();
 	}
 	
 	private void reload(){
+		
 		try {
 			AGISsites=readJsonFromUrl("http://atlas-agis-api.cern.ch/request/site/query/list/?json");
 		} catch (JSONException | IOException e) {
-			log.severe("could not reload AGIS site info");
-			e.printStackTrace();
+			log.severe("could not reload AGIS site info: "+ e.getMessage());
+			return;
 		}
 		
 		for (int i=0;i<AGISsites.length();i++){
@@ -50,15 +52,18 @@ public class AGISrepeater extends HttpServlet {
 			s.remove("psconf");
 			s.remove("has_notification");
 			s.remove("is_pledged");
+			s.remove("infoURL");
+			s.remove("emailContact");
+			s.remove("email");
+			s.remove("state_comment");
 		}
-		
 		try {
 			AGISservice=readJsonFromUrl("http://atlas-agis-api.cern.ch/request/service/query/get_se_services/?json&state=ACTIVE&flavour=XROOTD");
 		} catch (JSONException | IOException e) {
-			log.severe("could not reload AGIS service info");
-			e.printStackTrace();
+			log.severe("could not reload AGIS service info: "+e.getMessage());
 		}
-		
+
+		lastReload=new Date();
 	}
 	
 	private static String readAll(Reader rd) throws IOException {

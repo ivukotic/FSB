@@ -49,7 +49,7 @@ public class WANcostDeleteServlet extends HttpServlet {
 		Date cutoffTime = new Date(new Date().getTime() - 7 * 86400l * 1000);
 		Filter f = new Query.FilterPredicate("timestamp", FilterOperator.LESS_THAN, cutoffTime);
 		Query q = new Query("FAXcost").setFilter(f).setKeysOnly();
-		List<Entity> lRes = datastore.prepare(q).asList(FetchOptions.Builder.withLimit(20000).chunkSize(20000));
+		List<Entity> lRes = datastore.prepare(q).asList(FetchOptions.Builder.withLimit(30000).chunkSize(30000));
 		List<Key> kTOd= new ArrayList<Key>();
 		for (Entity result : lRes) {
 			kTOd.add(result.getKey());
@@ -73,7 +73,7 @@ public class WANcostDeleteServlet extends HttpServlet {
 		cutoffTime = new Date(new Date().getTime() - 30 * 86400l * 1000);
 		f = new Query.FilterPredicate("timestamp", FilterOperator.LESS_THAN, cutoffTime);
 		q = new Query("FAXcost1h").setFilter(f).setKeysOnly();
-		lRes = datastore.prepare(q).asList(FetchOptions.Builder.withLimit(1000).chunkSize(1000));
+		lRes = datastore.prepare(q).asList(FetchOptions.Builder.withLimit(5000).chunkSize(5000));
 		kTOd.clear();
 		for (Entity result : lRes) {
 			kTOd.add(result.getKey());
@@ -85,7 +85,7 @@ public class WANcostDeleteServlet extends HttpServlet {
 		cutoffTime = new Date(new Date().getTime() - 60 * 86400l * 1000);
 		f = new Query.FilterPredicate("timestamp", FilterOperator.LESS_THAN, cutoffTime);
 		q = new Query("FAXcost3h").setFilter(f).setKeysOnly();
-		lRes = datastore.prepare(q).asList(FetchOptions.Builder.withLimit(1000).chunkSize(1000));
+		lRes = datastore.prepare(q).asList(FetchOptions.Builder.withLimit(3000).chunkSize(3000));
 		kTOd.clear();
 		for (Entity result : lRes) {
 			kTOd.add(result.getKey());

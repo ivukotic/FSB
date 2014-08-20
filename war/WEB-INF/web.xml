@@ -4,6 +4,11 @@ xmlns="http://java.sun.com/xml/ns/javaee"
 xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
 http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
+
+	<servlet>
+		<servlet-name>forR</servlet-name>
+		<servlet-class>edu.uchicago.WANio.forR</servlet-class>
+	</servlet>
 	<servlet>
 		<servlet-name>WANio</servlet-name>
 		<servlet-class>edu.uchicago.WANio.WANioServlet</servlet-class>
@@ -11,6 +16,10 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
     <servlet>
 		<servlet-name>WANcost</servlet-name>
 		<servlet-class>edu.uchicago.WANio.WANcostServlet</servlet-class>
+	</servlet>
+    <servlet>
+		<servlet-name>Logs</servlet-name>
+		<servlet-class>edu.uchicago.WANio.LogsServlet</servlet-class>
 	</servlet>
 	<servlet>
 		<servlet-name>WANcostResumming</servlet-name>
@@ -45,6 +54,14 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<servlet-class>edu.uchicago.WANio.CopyFromAGISServlet</servlet-class>
 	</servlet>
 	<servlet>
+		<servlet-name>CopyFailover</servlet-name>
+		<servlet-class>edu.uchicago.WANio.CopyFailover</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>CopyOverflow</servlet-name>
+		<servlet-class>edu.uchicago.WANio.CopyOverflow</servlet-class>
+	</servlet>
+	<servlet>
 		<servlet-name>AGISrepeater</servlet-name>
 		<servlet-class>edu.uchicago.WANio.AGISrepeater</servlet-class>
 	</servlet>
@@ -53,12 +70,20 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<servlet-class>edu.uchicago.WANio.SSBrepeater</servlet-class>
 	</servlet>
 	<servlet-mapping>
+		<servlet-name>forR</servlet-name>
+		<url-pattern>/forR</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
 		<servlet-name>WANio</servlet-name>
 		<url-pattern>/wanio</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>WANcost</servlet-name>
 		<url-pattern>/wancost</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Logs</servlet-name>
+		<url-pattern>/logs</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>WANcostResumming</servlet-name>
@@ -91,6 +116,14 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 	<servlet-mapping>
 		<servlet-name>CopyFromAGIS</servlet-name>
 		<url-pattern>/UpdateFromAGIS</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>CopyFailover</servlet-name>
+		<url-pattern>/UpdateFailover</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>CopyOverflow</servlet-name>
+		<url-pattern>/CopyOverflow</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>AGISrepeater</servlet-name>

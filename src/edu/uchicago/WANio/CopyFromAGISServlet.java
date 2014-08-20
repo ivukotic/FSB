@@ -1,12 +1,10 @@
 package edu.uchicago.WANio;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -16,13 +14,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 @SuppressWarnings("serial")
 public class CopyFromAGISServlet extends HttpServlet {
@@ -30,25 +28,23 @@ public class CopyFromAGISServlet extends HttpServlet {
 
 	private DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-	private static String readAll(Reader rd) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		int cp;
-		while ((cp = rd.read()) != -1) {
-			sb.append((char) cp);
-		}
-		return sb.toString();
-	}
-
-	public static JSONArray readJsonFromUrl(String url) throws IOException, JSONException {
-		InputStream is = new URL(url).openStream();
+	private JsonElement getJsonFromUrl(String theURL) {
+		log.info("getting data from:" + theURL);
+		URL url;
+		HttpURLConnection request;
+		JsonParser jp = new JsonParser();
+		JsonElement root = null;
 		try {
-			BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
-			String jsonText = readAll(rd);
-			JSONArray json = new JSONArray(jsonText);
-			return json;
-		} finally {
-			is.close();
+			url = new URL(theURL);
+			request = (HttpURLConnection) url.openConnection();
+			request.connect();
+			root = jp.parse(new InputStreamReader((InputStream) request.getContent()));
+			request.disconnect();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
+
+		return root;
 	}
 
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -64,7 +60,7 @@ public class CopyFromAGISServlet extends HttpServlet {
 			String rname;
 			String address;
 			String raddress;
-//			List<String> ddmendpoints;
+			// List<String> ddmendpoints;
 			float lat;
 			float lon;
 			int tier;
@@ -72,52 +68,46 @@ public class CopyFromAGISServlet extends HttpServlet {
 
 		List<si> sis = new ArrayList<si>();
 
-
 		log.info("get EP info: site name, site address, redirector, redirector address");
-		String directURL = "http://atlas-agis-api.cern.ch/request/service/query/get_se_services/?json&state=ACTIVE&flavour=XROOTD";
-//		resp.getWriter().println(directURL);
-		JSONArray jo = readJsonFromUrl(directURL);
-//		resp.getWriter().println(jo.length());
+		String theURL = "http://atlas-agis-api.cern.ch/request/service/query/get_se_services/?json&state=ACTIVE&flavour=XROOTD";
+		JsonArray jo = getJsonFromUrl(theURL).getAsJsonArray();
 
-		for (int i = 0; i < jo.length(); ++i) {
-			JSONObject rec = jo.getJSONObject(i);
+		for (int i = 0; i < jo.size(); ++i) {
+			JsonObject rec = jo.get(i).getAsJsonObject();
 
 			si s = new si();
-			s.name=rec.getString("rc_site");
-			s.address = rec.getString("endpoint");
-			s.rname = rec.getJSONObject("redirector").getString("name");
-			s.raddress = rec.getJSONObject("redirector").getString("endpoint");
+			s.name = rec.get("rc_site").getAsString();
+			s.address = rec.get("endpoint").getAsString();
+			s.rname = rec.getAsJsonObject("redirector").get("name").getAsString();
+			s.raddress = rec.getAsJsonObject("redirector").get("endpoint").getAsString();
 			sis.add(s);
 
-//			log.warning("2 added " + s.name);
-			
+			// resp.getWriter().println("added " + s.name+"\n");
 		}
-		
-		
-		
-		log.info("get EP info:  lat,long, tier.");
-		String SiteInfoURL = "http://atlas-agis-api.cern.ch/request/site/query/list/?json&vo_name=atlas&state=ACTIVE";
-//		resp.getWriter().println(SiteInfoURL);
-		jo = readJsonFromUrl(SiteInfoURL);
-//		resp.getWriter().println(jo.length());
 
-		for (int i = 0; i < jo.length(); ++i) {
-			JSONObject rec = jo.getJSONObject(i);
-			String name=rec.getString("rc_site");
+		log.info("get EP info:  lat,long, tier.");
+		theURL = "http://atlas-agis-api.cern.ch/request/site/query/list/?json&vo_name=atlas&state=ACTIVE";
+		jo = getJsonFromUrl(theURL).getAsJsonArray();
+
+		// resp.getWriter().println(jo.size()+"\n");
+
+		for (int i = 0; i < jo.size(); ++i) {
+			JsonObject rec = jo.get(i).getAsJsonObject();
+			String name = rec.get("rc_site").getAsString();
 			for (si s : sis) {
 				if (s.name.equals(name)) {
-					if (name.equals("GRIF")) s.name=rec.getString("name");
-					s.lat = (float) rec.getDouble("latitude");
-					s.lon = (float) rec.getDouble("longitude");
-					s.tier = rec.getInt("tier_level");
+					if (name.equals("GRIF"))
+						s.name = rec.get("name").getAsString();
+					s.lat = (float) rec.get("latitude").getAsDouble();
+					s.lon = (float) rec.get("longitude").getAsDouble();
+					s.tier = rec.get("tier_level").getAsInt();
 
-//					log.warning("1 added " + s.name);
+					// resp.getWriter().println("info added " + s.name+"\n");
 					break;
 				}
 			}
 		}
 
-		
 		Date currTime = new Date();
 
 		for (si s : sis) {
@@ -132,6 +122,25 @@ public class CopyFromAGISServlet extends HttpServlet {
 			datastore.put(ep);
 		}
 
+		// Getting redirectors
+		theURL = "http://atlas-agis-api.cern.ch/request/service/query/get_redirector_services/?json&state=ACTIVE";
+		jo = getJsonFromUrl(theURL).getAsJsonArray();
+
+		// resp.getWriter().println(jo.size());
+
+		for (int i = 0; i < jo.size(); ++i) {
+			JsonObject rec = jo.get(i).getAsJsonObject();
+
+			String Rname = rec.get("name").getAsString();
+			String Raddress = rec.get("endpoint").getAsString();
+
+			Entity ep = new Entity("redirector", Rname);
+			ep.setProperty("timestamp", currTime);
+			ep.setProperty("address", Raddress);
+			datastore.put(ep);
+
+			// resp.getWriter().println("redirector" + Rname+"\n");
+		}
 
 	}
 }

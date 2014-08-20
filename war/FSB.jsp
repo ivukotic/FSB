@@ -8,23 +8,27 @@
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <title>FSB - FAX Status Board</title>
 
-<link rel="stylesheet" href="css/ilija.css" type="text/css">
-<link rel="stylesheet"
-	href="http://code.jquery.com/ui/1.10.2/themes/redmond/jquery-ui.css">
-<link rel="stylesheet" href="DataTables-1.9.4/media/css/demo_table.css">
+<link rel="stylesheet" href="static/ilija.css" type="text/css">
+<link rel="stylesheet" type="text/css" href="//code.jquery.com/ui/1.10.3/themes/redmond/jquery-ui.css">
 
-<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
-<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+<link rel="stylesheet" type="text/css" href=
+	"//cdn.datatables.net/plug-ins/725b2a2115b/integration/jqueryui/dataTables.jqueryui.css">
+	
 
-<script type="text/javascript" language="javascript"
-	src="DataTables-1.9.4/media/js/jquery.dataTables.js"></script>
+<script type="text/javascript" language="javascript" src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+
+
+<script type="text/javascript" language="javascript" src="//cdn.datatables.net/1.10.2/js/jquery.dataTables.min.js"></script>
 	
 <script src="http://code.highcharts.com/highcharts.js"></script>
 <script src="http://code.highcharts.com/modules/heatmap.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
 
 <script
 	src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
 
+	<script src="static/dynamic.js"></script>
 </head>
 <body>
 
@@ -46,333 +50,129 @@
     fDate="<%= fDate %>";
     </script>
     
+    <script>
+	
+    function showCostMatrix(){
+    	$("#loading").show();
+    	hcoptions={
+    			chart: { type: 'heatmap', marginTop: 40, marginBottom: 40 },
+    			title: { text: 'xrdcp rates from FAX endpoints to WNs'},
+    			xAxis: { categories:[], title: 'destinations' },
+    			yAxis: { categories:[], title: 'sources' },
+    			colorAxis: { stops: [ [0, '#ff0000'], [0.05, '#00ff00'], [1, '#0000FF'] ], min: 0 },
+    			legend: { align: 'right', layout: 'vertical', margin: 0, verticalAlign: 'top', y: 25, symbolHeight: 320 },
+    			tooltip: {
+    				formatter: function () {
+    					return '<b>' + this.series.xAxis.categories[this.point.x] + '</b> copied <br><b>' +
+    					this.point.value + '</b> in average from <br><b>' + this.series.yAxis.categories[this.point.y] + '</b>';
+    				}
+    			},
+    			series: [{
+    				name: 'xrdcp rates', borderWidth: 1, data: [],
+    				dataLabels: { enabled: false, color: 'black', style: { textShadow: 'none' } }
+    			}],
+    			exporting: {     buttons: { contextButton: {  text: 'Export' }  }, sourceHeight:1050, sourceWidth: 1485 },
+    			credits: { enabled: false }
+    	}
 
+    	$.getJSON("wancost",{costmatrix:$("#idCostMatrixTimeScale option:selected").val()}, function(data){
+    			hcoptions.xAxis.categories=data.destinations;
+    			hcoptions.yAxis.categories=data.sources;
+    			hcoptions.series[0].data=[];
+//     	    	console.log(data.destinations);
+//    	    	console.log(data.sources);
+    	    	so=data.sources.length;
+    	    	de=data.destinations.length;
+    			for(var i = 0; i < so; i++) {
+    				for(var j = 0; j < de; j++) {
+    					var z=data.links[i*de+j];
+    					if (z>=0) hcoptions.series[0].data.push( [ j, i, z ] );
+    				}
+    			}
+    			$('#costmatrixspace').highcharts(hcoptions);
+    	} );
+    	$("#loading").hide();
+    }
+    
+    function showFailover(){
 
-	<script>
-		var epTable, reTable;
+    	$.ajaxSetup({async: false});
+    	var options = {
+    			chart : {
+    				renderTo : 'failovergraphspace', zoomType : 'xy',
+    				type : 'column', height : 600, margin : [ 60, 30, 45, 70 ]
+    			},
+    			plotOptions: {  series: { pointRange: 4 * 3600 * 1000 } },
+    			title : { text : '' },
+    			xAxis : { type : 'datetime', tickWidth : 0, gridLineWidth : 1, title : { text : 'Date' } },
+    			yAxis : { title : { text : '' } },
+    			legend : { align : 'left', verticalAlign : 'top', y : 10, floating : true, borderWidth : 0 },
+    			exporting: {     buttons: { contextButton: {  text: 'Export' } }, sourceHeight:1050, sourceWidth: 1485    },
+    			credits: { enabled: false }
+    			// tooltip: { formatter: function() { return '<b>'+ this.series.name +'</b><br/>'+ Highcharts.dateFormat('%e. %b', this.x) +': '+ this.y +' m';} },
+    	}; 
+    	    	
+/*     	$.get("wanio", {failover:$("#idFailoverTimeScale option:selected").val()}, function(msg) {
+    		if (msg.length) {
+    			msg = msg.trim().split(/\n/g);
+    			jQuery.each(msg, function(i, line) {
+    				line = line.split(/\t/);
+    				failoverTable.fnAddData([ '<img src="static/details_open.png">', line[0], line[1], line[2], line[3], line[4], line[5], line[6], line[7], line[8] ]);
+    			});
+    		}
+    	}); */
+    	
+    	$.getJSON("UpdateFailover", {failovertime:$("#idFailoverTimeScale option:selected").val(), failoverplot:$("#idFailoverPlotSelect option:selected").val(), failoversite:$("#idFailoverSiteSelect option:selected").val()}, function(data) {
+    		options.series=data.plot;
+    		chart = new Highcharts.Chart(options); 
+    		$('#failovertablespace').dataTable( {
+		    	"bJQueryUI": true,
+		        "data": data.tableData.data,
+		        "columns": data.tableData.headers,
+		        "bDestroy": true
+		    } );    
+		    
+    	});
 
+    }
+    
+    function showOverflow(){
 
-		function getepStatusTable() {
-			$("#loading").show();
-			$.get("wanio", {}, function(msg) {
-				if (msg.length) {
-					msg = msg.trim().split(/\n/g);
-					jQuery.each(msg, function(i, line) {
-						line = line.split(/\t/);
-						// name, direct, upstream. downstream, x509
-						epTable.fnAddData([ '<img src="images/details_open.png">', line[0], line[1], line[2], line[3], line[4] ]);
-					});
-				}
-			});
-			$("#loading").hide();
-		}
-
-		
-
-		var map; 
-		var markers=[];
-		var geodesic;
-		var geodesics=[];
-		var geodesicOptions = { strokeColor: '#CC0099', strokeOpacity: 1.0, strokeWeight: 3, geodesic: true }
-		var infowindow;
-		function drawConnections(marker){
-				//clear paths
-				for (var i=0;i<geodesics.length;i++) geodesics[i].setMap(null);
-				
-				map.panTo(marker.getPosition());
-				var stars=[];
-				var rates=[];
-				$.get("wancost",{central:marker.title, as:$("#idMapTimeScale option:selected").val() }, function(msg){
-					if (msg.length) {
-						msg = msg.trim().split(/\n/g);
-						var maxRate=0;
-						jQuery.each(msg, function(i, line) {
-							line = line.split(/\t/);
-							stars.push(line[0]);
-							var rate=parseFloat(line[1])
-							rates.push(rate);
-							if (rate>maxRate) maxRate=rate;
-						});
-					
-						console.log("stars: "+stars.length);
-						console.log("marks: "+markers.length);
-						if (stars.length==1) {
-							alert("Site "+marker.title+" was not used as "+$("#idMapTimeScale option:selected").val());
-							return;
-						}
-
-						for (var s in stars){ // these are only site names
-							for (var i=0;i<markers.length;i++){ // these are actual markers
-								sitename=markers[i].title;
-								if(sitename!=stars[s]) continue;
-								geodesic = new google.maps.Polyline(geodesicOptions);
-								geodesic.setOptions({strokeWeight: rates[s]/maxRate*5.0}); 
-								geodesic.setMap(map);
-								
-								google.maps.event.addListener(geodesic, 'click', function(event) {
-									cont="";
-									if ($("#idMapTimeScale option:selected").val()=="destination")
-										cont="source:<b>"+sitename+"</b><br>destination: <b>"+marker.title+"</b><br>rate: <b>"+rates[s]+"</b>";
-									else
-										cont="destination:<b>"+sitename+"</b><br>source: <b>"+marker.title+"</b><br>rate: <b>"+rates[s]+"</b>";
-									infowindow = new google.maps.InfoWindow({content: cont});
-									infowindow.open(map,event.latLng);
-								});
-								var gPath = geodesic.getPath();
-								gPath.push(marker.getPosition());
-								gPath.push(markers[i].getPosition());
-								geodesics.push(geodesic);
-								
-							}
-						}
-						
-					}
-				} );
-				
-				
-		}
-		
-		function showMap() {
-			
-			$("#loading").show();
-			var mapOptions = { zoom : 2, center : new google.maps.LatLng(20.0, 0.0) };
-			map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-
-			$.get("wanio", {
-				map : "all"
-			}, function(msg) {
-				if (msg.length) {
-					markers=[];
-					msg = msg.trim().split(/\n/g);
-					jQuery.each(msg, function(i, line) {
-						line = line.split(/\t/);
-						
-						var marker = new google.maps.Marker({
-							position : new google.maps.LatLng( parseFloat(line[1]), parseFloat(line[2])), 
-							map : map, title : line[0]
-						});
-						
-						google.maps.event.addListener(marker, 'click', function(){drawConnections(marker);});
-						
-						markers.push(marker);
-					});
-				}
-			});
-
-
-			
-			$("#loading").hide();
-
-
-		}
-
-		function preload() {
- 			$.get("wancost", {
-				preload : "all"
-			}, function(msg) {
-				if (msg.length) {
-					msg = msg.trim().split(/\n/g);
-					jQuery.each(msg, function(i, line) {
-						line = line.split(/\t/);
-						if (line[0] == 'source')
-							$("#idSource").append( '<option value="'+line[1]+'">' + line[1] + '</option>');
-						if (line[0] == 'destination')
-							$("#idDestination").append( '<option value="'+line[1]+'">' + line[1] + '</option>');
-					});
-				}
-			}); 
-		}
-
-		function showCost() {
-			$("#loading").show();
-	 		var options = {
-	 				chart : {
-	 					renderTo : 'graphspace', zoomType : 'xy',
-	 					type : 'line', height : 600, margin : [ 60, 30, 45, 70 ]
-	 				},
-	 				title : { text : '' },
-	 				xAxis : { type : 'datetime', tickWidth : 0, gridLineWidth : 1, title : { text : 'Date' } },
-	 				yAxis : { title : { text : 'Rate [MB/s]' } },
-	 				legend : { align : 'left', verticalAlign : 'top', y : 10, floating : true, borderWidth : 0 },
-	 			// tooltip: { formatter: function() { return '<b>'+ this.series.name +'</b><br/>'+ Highcharts.dateFormat('%e. %b', this.x) +': '+ this.y +' m';} },
-	 			}; 
-			$.get("wancost",{source:$("#idSource option:selected").text(),destination:$("#idDestination option:selected").text(),binning:$("#idTimeZoom option:selected").val()}, function(msg){
-				if (msg.length) {
-					options.series = new Array();
-					options.series[0]=new Object();
-					options.series[0].name = $("#idSource option:selected").text()+" to "+ $("#idDestination option:selected").text();
-					options.series[0].data = new Array();
-					msg = msg.trim().split(/\n/g);
-					jQuery.each(msg, function(i, line) {
-						line = line.split(/\t/);
-						var x=parseFloat(line[0]);
-						var y=parseFloat(line[1]);
-						options.series[0].data.push( [ x, y ] );
-					});
-					chart = new Highcharts.Chart(options); 
-				}
-			} ); 
-			$("#loading").hide();
-		}
-
-		function showCostMatrix(){
-			$("#loading").show();
-			hcoptions={
-			        chart: { type: 'heatmap', marginTop: 40, marginBottom: 40 },
-			        title: { text: 'xrdcp rates from FAX endpoints to WNs'},
-			        xAxis: { categories:[], title: 'destinations' },
-			        yAxis: { categories:[], title: 'sources' },
-			        colorAxis: { stops: [ [0, '#ff0000'], [0.05, '#00ff00'], [1, '#0000FF'] ], min: 0 },
-			        legend: { align: 'right', layout: 'vertical', margin: 0, verticalAlign: 'top', y: 25, symbolHeight: 320 },
-			        tooltip: {
-			            formatter: function () {
-			                return '<b>' + this.series.xAxis.categories[this.point.x] + '</b> copied <br><b>' +
-			                    this.point.value + '</b> in average from <br><b>' + this.series.yAxis.categories[this.point.y] + '</b>';
-			            }
-			        },
-			        series: [{
-			            name: 'xrdcp rates', borderWidth: 1, data: [],
-			            dataLabels: { enabled: false, color: 'black', style: { textShadow: 'none' } }
-			        }]
-			}
-			  			
-			$.get("wancost",{costmatrix:$("#idTimeScale option:selected").val()}, function(msg){
-				if (msg.length) {
-					hcoptions.xAxis.categories=[]
-					hcoptions.yAxis.categories=[]
-					msg = msg.trim().split(/\n/g);
-					line=msg[0].split(/\t/);
-					l=1;
-					for (i=0;i<parseInt(line[1]);i++){ //sources
-						for (j=0;j<parseInt(line[2]);j++){ // destinations
-							dline=msg[l].split(/\t/);
-							if(i==0) hcoptions.xAxis.categories.push(dline[1]); //destination on x axis
-							if(j==0) hcoptions.yAxis.categories.push(dline[0]); // source on y axis
-							var z=parseFloat(dline[2]);
-							if (z>=0) hcoptions.series[0].data.push( [ j, i, z ] );
-							l++;
-						}
-					}
-					$('#costmatrixspace').highcharts(hcoptions);
-				}
-			} );
-			$("#loading").hide();
-		}
-		
-		window.onload = function() {
-			//	alert("welcome");
-		}
-
-		$(document).ready(
-				function() {
-
-					getepStatusTable();
-					preload();
-					$('#idSource, #idDestination, #idTimeZoom').change(showCost);
-					$('#idMapTimeScale').change(showCost);
-					$('#idTimeScale').change(showMap);
-					
-					$("#tabs").tabs({
-						activate : function(event, ui) {
-							if (ui.newPanel.index() == 1) { // loading status tab
-								console.log("loading tab 1.");
-								$("#loading").show();
-								getepStatusTable();
-								$("#loading").hide();
-							} else {
-								epTable.fnClearTable();
-							}
-
-							if (ui.newPanel.index() == 2) { // loading redirector tab
-								console.log("loading tab 2.");
-								$("#loading").show();
-								// getStatusDoneTable();
-								$("#loading").hide();
-							} else {
-								reTable.fnClearTable();
-							}
-
-							if (ui.newPanel.index() == 3) { // map
-								console.log("loading tab 3.");
-								$("#loading").show();
-								showMap();
-								$("#loading").hide();
-							} else {
-
-							}
-							if (ui.newPanel.index() == 4) { // loading single link plot
-								console.log("loading tab 4.");
-								$("#loading").show();
-								showCost();
-								$("#loading").hide();
-							} else {
-
-							}							
-							if (ui.newPanel.index() == 5) { // loading cost matrix
-								console.log("loading tab 5.");
-								$("#loading").show();
-								showCostMatrix();
-								$("#loading").hide();
-							} else {
-
-							}
-
-						}
-					});
-
-					epTable = $('#epStatus').dataTable( { 
-						"iDisplayLength" : 25,
-						"aoColumnDefs" : [ { "bSortable" : false, "aTargets" : [ 0 ] } ],
-						"aaSorting" : [ [ 1, 'asc' ] ],
-						"aoColumns" : [ { sWidth : '3%' }, { sWidth : '20%' }, {}, {}, {}, {} ],
-						"fnRowCallback" : function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-
-							sname=aData[1]
-							for (col = 2; col < 6; col++){
-								link=''
-								if (col==2) link=sname +'_to_' +sname
-								if (col==3) link='upstreamFrom_' +sname
-								if (col==4) link='downstreamTo_' +sname
-								if (col==5) link='checkSecurity_'+sname
-								link+='_'+fDate+'.log'
-								
-								if (aData[col] == "true") {
-									$('td:eq(' + col + ')', nRow).html('<a href="http://www.mwt2.org/ssb/' + link + '">OK</a>').css( 'backgroundColor', '#00FF00');
-								} else
-									$('td:eq(' + col + ')', nRow).html('<a href="http://www.mwt2.org/ssb/'+link+'">Problem</a>').css( 'backgroundColor', '#FF0000');
-								
-								if (aData[5] == "false")
-									$('td:eq(5)', nRow).css( 'backgroundColor', '#FFFF00');
-							} 
-						}
-					});
-
-					reTable = $('#reStatus').dataTable({
-						"iDisplayLength" : 25,
-						"aoColumnDefs" : [ {
-							"bSortable" : false,
-							"aTargets" : [ 0 ]
-						} ],
-						"aaSorting" : [ [ 1, 'asc' ] ],
-						"aoColumns" : [ {
-							sWidth : '3%'
-						}, {
-							sWidth : '6%',
-							"sClass" : "right"
-						}, {}, {}, {
-							sWidth : '3%'
-						} ]
-
-					});
-
-				});
-	</script>
-
+    	$.ajaxSetup({async: false});
+    	var options = {
+    			chart : {
+    				renderTo : 'overflowgraphspace', zoomType : 'xy',
+    				type : 'column', height : 600, margin : [ 60, 30, 45, 70 ]
+    			},
+    			plotOptions: {  series: { pointRange:  3600 * 1000 } },
+    			title : { text : '' },
+    			xAxis : { type : 'datetime', tickWidth : 0, gridLineWidth : 1, title : { text : 'Date' } },
+    			yAxis : { title : { text : '' } },
+    			legend : { align : 'left', verticalAlign : 'top', y : 10, floating : true, borderWidth : 0 },
+    			exporting: {     buttons: { contextButton: {  text: 'Export' } }, sourceHeight:1050, sourceWidth: 1485    },
+    			credits: { enabled: false }
+    			// tooltip: { formatter: function() { return '<b>'+ this.series.name +'</b><br/>'+ Highcharts.dateFormat('%e. %b', this.x) +': '+ this.y +' m';} },
+    	}; 
+    	
+    	$.getJSON("CopyOverflow", {overflowtime:$("#idOverflowTimeScale option:selected").val(), overflowplot:$("#idOverflowPlotSelect option:selected").val(), overflowdest:$("#idOverflowDestinationSelect option:selected").val()}, function(data) {
+    		options.series=data.plot;
+    		chart = new Highcharts.Chart(options); 
+    		$('#overflowtablespace').dataTable( {
+		    	"bJQueryUI": true,
+		        "data": data.tableData.data,
+		        "columns": data.tableData.headers,
+		        "bDestroy": true
+		    } );    
+		    
+    	});
+    }
+    
+    </script>
 	<div class="maincolumn">
 
 		<div class="mainheading">
 			<a href="http://atlas.web.cern.ch/Atlas/Collaboration/"> <img
-				border="0" src="images/atlas_logo.jpg" alt="ATLAS main page">
+				border="0" src="static/atlas_logo.jpg" alt="ATLAS main page">
 			</a>
 			<div id="maintitle">FAX Status Board</div>
 		</div>
@@ -385,6 +185,10 @@
 				<li><a href="#tabs-3">Map</a></li>
 				<li><a href="#tabs-4">Link rates</a></li>
 				<li><a href="#tabs-5">Cost Matrix</a></li>
+				<li><a href="#tabs-6">Stability</a></li>
+				<li><a href="#tabs-7">Failover</a></li>
+				<li><a href="#tabs-8">Overflow</a></li>
+				<li><a href="#tabs-9">Docs and links</a></li>
 			</ul>
 			<div id="tabs-1">
 				<br>
@@ -443,7 +247,37 @@
 				<div id="graphspace"></div>
 			</div>			
 			<div id="tabs-5">
-				Time scale:<select id="idTimeScale">
+				Time scale:<select id="idCostMatrixTimeScale">
+				<option value=6 selected>6h</option>
+				<option value=12>12h</option>
+				<option value=24>24h </option>
+				<option value=48>48h</option>
+				<option value=168>last week</option>
+				<option value=336>last 2 weeks</option>
+				<option value=672>last month</option>
+				<option value=8760>last year</option>
+				<option value=99999>all the time</option>
+				</select> 
+				<div id="costmatrixspace" style="height:1050px"></div>
+			</div>	
+			<div id="tabs-6">
+				Test type:<select id="idStability">
+				<option value=direct selected>Direct</option>
+				<option value=upstream>Upstream</option>
+				<option value=downstream>Downstream</option>
+				<option value=x509>x509</option>
+				</select> 
+				Time scale:<select id="idStabilityTimeScale">
+				<option value=24 selected>24 h</option>
+				<option value=48>48 h</option>
+				<option value=168>week</option>
+				<option value=336>two weeks</option>
+				<option value=672>month</option>
+				</select> 
+				<div id="stabilityspace" style="height:1100px"></div>
+			</div>
+			<div id="tabs-7">
+				Time scale:<select id="idFailoverTimeScale">
 				<option value=6>6h</option>
 				<option value=12>12h</option>
 				<option value=24 selected>24h </option>
@@ -452,17 +286,100 @@
 				<option value=336>last 2 weeks</option>
 				<option value=672>last month</option>
 				<option value=8760>last year</option>
-				<option value=99999>all the time</option>
 				</select> 
-				<div id="costmatrixspace" style="height:800px"></div>
+				
+				Queue:<select id="idFailoverSiteSelect"></select> 
+				Show:<select id="idFailoverPlotSelect">
+				<option selected>jobs</option>
+				<option>Files</option>
+				<option>Data size</option>
+				<option>Transfer duration</option>
+				</select> 
+				<div id="failovergraphspace"></div>
+				<br>
+				<br>
+				<table cellpadding="0" cellspacing="0" border="0" class="display"
+					id="failovertablespace" width="100%">
+					<thead></thead>
+					<tbody></tbody>
+				</table>
+<!-- 				<table cellpadding="0" cellspacing="0" border="0" class="display"
+					id="failoverspace" width="100%">
+					<thead>
+						<tr>
+							<th></th>
+							<th>Site</th>
+							<th>Username</th>
+							<th>PandaID</th>
+							<th>Status</th>
+							<th>Files with FAX</th>
+							<th>Files without FAX</th>
+							<th>Bytes with FAX</th>
+							<th>Bytes without FAX</th>
+							<th>Time to copy</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table> -->
+			</div>
+			<div id="tabs-8">				
+				Time scale:<select id="idOverflowTimeScale">
+				<option value=6>6h</option>
+				<option value=12>12h</option>
+				<option value=24 selected>24h </option>
+				<option value=48>48h</option>
+				<option value=168>last week</option>
+				<option value=336>last 2 weeks</option>
+				<option value=672>last month</option>
+				<option value=8760>last year</option>
+				</select> 
+				Destination:<select id="idOverflowDestinationSelect"></select> 
+				Show:<select id="idOverflowPlotSelect">
+				<option selected>jobs</option>
+				<option>Avg. wait time</option>
+				<option>Avg. duration</option>
+				<option>Avg. CPU time</option>
+				</select> 
+				<div id="overflowgraphspace"></div>
+				<br>
+				<table cellpadding="0" cellspacing="0" border="0" class="display"
+					id="overflowtablespace" width="100%">
+					<thead></thead>
+					<tbody></tbody>
+				</table>
+			</div>
+			
+			<div id="tabs-9">
+				
+				<b>
+				<a href="https://twiki.cern.ch/twiki/bin/view/AtlasComputing/AtlasXrootdSystems">Homepage</a> <br>
+				<a href="https://its.cern.ch/jira/browse/FAX">Jira</a> <br>
+				<a href="http://git.cern.ch/pubweb/FAX.git">Git repository</a> <br>
+				</b>
+				
+				<H2>TWiki</H2>
+					<a href="https://twiki.cern.ch/twiki/bin/view/AtlasComputing/FaxCoverage">Current coverage</a><br>
+					<a href="https://twiki.cern.ch/twiki/bin/view/AtlasComputing/RemotelyObtained">Remotely Obtained XRootD information</a> 
+				<H2>Site Status Board (SSB)</H2>
+					<a href="http://dashb-atlas-ssb.cern.ch/dashboard/request.py/siteview#currentView=FAX+endpoints&fullscreen=true&highlight=false">Endpoints tests</a> *Direct, upstream, downstream, X509*<br>
+   					<a href="http://dashb-atlas-ssb.cern.ch/dashboard/request.py/siteview#currentView=FAX+redirectors&fullscreen=true&highlight=false">Redirectors test</a> *Upstream, downstream*<br>
+   					<a href="http://dashb-atlas-ssb.cern.ch/dashboard/request.py/siteview#currentView=FAX+cost+matrix&fullscreen=true&highlight=false">FAX cost matrix</a> *Transfer rates by xrdcp*  	
+				
+				<H2>XRootD based monitoring</H2>
+				<a href="http://atl-prod07.slac.stanford.edu:8080/">MonaLisa FAX dashboard</a>  <br>
+				<a href="http://dashb-atlas-xrootd-transfers.cern.ch/ui">Transfers dashboard</a>  <br>
+       			<a href="http://dashb-ai-621.cern.ch/cosmic/DB_ML_Comparator/">ML DDM consistency checks</a>     
+				
 			</div>
 		</div>
 
 	</div>
 
 	<div id="loading" style="display: none">
-		<br> <br>Loading data. Please wait...<br> <br> <img
-			src="images/wait_animated.gif" alt="loading" />
+		<br> <br>Loading data. Please wait...<br> <br> 
+		<img src="static/wait_animated.gif" alt="loading" />
 	</div>
+	
+	
 </body>
 </html>

@@ -3,6 +3,7 @@
   <application>waniotest</application>
   <version>1</version>
 
+  
   <!--
     Allows App Engine to send multiple requests to one instance in parallel:
   -->
@@ -13,6 +14,9 @@
     <property name="java.util.logging.config.file" value="WEB-INF/logging.properties"/>
   </system-properties>
 
+
+  
+  
   <!--
     HTTP Sessions are disabled by default. To enable HTTP sessions specify:
 
