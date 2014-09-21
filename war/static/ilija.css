@@ -1,0 +1,152 @@
+.naslov, .normal, .stavkaZa, .stavkaProtiv, .footer{color:black; font-family:helvetica} 
+.naslov{ font-size:32px; text-align:center}
+.normal{ font-size: 14px; line-height:150%}
+.stavkaZa{ font-size:16px; line-height:150%}
+.stavkaProtiv{ font-size:16px; line-height:150%}
+.footer{font-size:12px; text-align:center} 
+.cvTitle, .cvNormal, .cvSubTitle{color:black; font-family:helvetica; font-size:14px}
+.cvTitle {font-size: 26px; text-align:center}
+.cvSubTitle {font-size:18px}
+
+/*DIV {outline: 1px dashed red;}*/
+
+body{
+    font-family:arial;
+    text-align: center;
+    font-size: 12px;
+    }
+
+td.right{
+    text-align: right;
+}
+
+a.button, a.buttonDis {
+display: block;
+background-color: transparent;
+background-image: url(../images/buttonBackground.gif);
+background-repeat: no-repeat;
+width: 132px;
+height: 28px;
+margin: 5px auto;
+padding: 5px 0 0 0;
+text-align: center;
+font-family: Helvetica, Calibri, Arial, sans-serif;
+font-size: 125%;
+font-weight: bold;
+text-decoration: none;
+}
+a.button:link, a.button:visited {
+color: #002577;
+}
+a.button:hover, a.button:active {
+background-position: 0 -36px;
+color: #FF7200;
+}
+a.buttonDis:link, a.buttonDis:visited, a.buttonDis:hover, a.buttonDis:active {
+background-position: 0 -72px;
+color: #5F5F5F;
+cursor: default;
+}
+
+.icon {
+background-repeat: no-repeat;
+padding: 0 0 5px 18px; }
+
+a.button:hover .icon, a.button:active .icon {
+background-position: 0 -28px;
+}
+a.buttonDis:link .icon, a.buttonDis:visited .icon, a.buttonDis:hover .icon, a.buttonDis:active .icon {
+background-position: 0 -56px;
+}
+
+div.footer{
+	text-align:center;
+	padding:0.5em;
+	color:blue;
+	background-color:white;
+	clear:left;
+}
+
+div.logodiv{
+	margin: 5% auto;
+    text-align: left;
+    width: 450px;
+}
+
+img.lo{
+float:right;
+}
+
+table.nav{
+background:white;
+font: bold 80% arial;
+}
+
+.maincolumn{
+    text-align: left;
+    width: 90%;
+    margin: 0 auto;
+}
+.subcolumn{
+    width: 15%;
+    margin: 0%;
+    float: left;
+    color: black;
+}
+
+.subcolumnright{
+    width:80%;
+    float: left;
+}
+
+.mainheading{
+    background-color: blue;
+    padding: 2%;
+}
+#maintitle{
+    font-family:  Arial;
+    font-size: 500%;
+    color: white;
+    tex-align: center;
+    float:right;
+}
+.item{
+    clear: both;
+    background-color: aqua;
+    font-family:  arial;
+    font-size: 15px;
+    color: black;
+    padding: 3%;
+    margin: 1%;
+}
+.item > a{
+    font-size: 18px;
+    font-weight:bold;
+    color: red;
+    text-decoration: none;
+}
+#loading {
+        width: 200px;
+        height: 100px;
+        background-color: #FFFFFF;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        margin-top: -50px;
+        margin-left: -100px;
+        text-align: center;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        font-weight: bold;
+        color: #0000FF;
+        border: thick double #FF0000;
+}
+.b_estimate{
+    float: right;
+}
+#b_request{
+    float: right;
+}
+#t_results{
+    width:100%;
+}

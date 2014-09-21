@@ -50,18 +50,5 @@ public class caches {
 		if (new Date().getTime()-refresh.getTime() > 12*3600*1000 || lSources.isEmpty() || lDestinations.isEmpty() ) loadSites();
 	}
 	
-//	public static void rewrite(){
-//		List<Entity> sou=new ArrayList<Entity>();
-//		for (String s:lSources){
-//			sou.add(new Entity("source",s));
-//		}
-//		datastore.put(sou);
-//		
-//		List<Entity> dest=new ArrayList<Entity>();
-//		for (String d:lDestinations){
-//			dest.add(new Entity("destination",d));
-//		}
-//		datastore.put(dest);
-//	}
 	
 }

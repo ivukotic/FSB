@@ -63,7 +63,7 @@ public class WANcostServlet extends HttpServlet {
 
 		if (req.getParameter("preload") != null) {
 			log.info("data for the source and destination...");
-			JSONObject res=new JSONObject();
+			JSONObject res = new JSONObject();
 			res.put("sources", caches.lSources);
 			res.put("destinations", caches.lDestinations);
 			resp.getWriter().print(res);
@@ -84,11 +84,11 @@ public class WANcostServlet extends HttpServlet {
 				}
 			}
 
-			link[][] linkArr = new link[caches.lSources.size()][caches.lDestinations.size()];
+			link[][] linkArr = new link[caches.lDestinations.size()][caches.lSources.size()];
 
-			for (int i = 0; i < caches.lSources.size(); i++)
-				for (int j = 0; j < caches.lDestinations.size(); j++)
-					linkArr[i][j] = new link();
+			for (int d = 0; d < caches.lDestinations.size(); d++)
+				for (int s = 0; s < caches.lSources.size(); s++)
+					linkArr[d][s] = new link();
 
 			log.warning("links..." + caches.lSources.size() + " " + caches.lDestinations.size());
 			Integer interval = Integer.parseInt(req.getParameter("costmatrix"));
@@ -100,29 +100,29 @@ public class WANcostServlet extends HttpServlet {
 
 			log.warning("lRes obtained... " + lRes.size());
 			for (Entity result : lRes) {
-				String s = (String) result.getProperty("source");
-				String d = (String) result.getProperty("destination");
-				int i = caches.lSources.indexOf(s);
-				int j = caches.lDestinations.indexOf(d);
-				if (i < 0 || j < 0) {
-					log.warning(s + " " + d + " " + i + " " + j);
+				String so = (String) result.getProperty("source");
+				String de = (String) result.getProperty("destination");
+				int s = caches.lSources.indexOf(so);
+				int d = caches.lDestinations.indexOf(de);
+				if (s < 0 || d < 0) {
+					log.warning(so + " " + de + " " + s + " " + d);
 					continue;
 				}
-				linkArr[i][j].measurements++;
+				linkArr[d][s].measurements++;
 				if (result.getProperty("rate") == null)
 					log.severe("rate is null");
 				else
-					linkArr[i][j].sum += ((Double) result.getProperty("rate")).floatValue();
+					linkArr[d][s].sum += ((Double) result.getProperty("rate")).floatValue();
 			}
 
-			JSONObject res=new JSONObject();
-			JSONArray links=new JSONArray();
+			JSONObject res = new JSONObject();
+			JSONArray links = new JSONArray();
 			res.put("sources", caches.lSources);
 			res.put("destinations", caches.lDestinations);
 
-			for (int i = 0; i < caches.lSources.size(); i++) {
-				for (int j = 0; j < caches.lDestinations.size(); j++) {
-					links.put(new Float(new DecimalFormat("#.##").format(linkArr[i][j].getAvg())));
+			for (int d = 0; d < caches.lDestinations.size(); d++) {
+				for (int s = 0; s < caches.lSources.size(); s++) {
+					links.put(new Float(new DecimalFormat("#.##").format(linkArr[d][s].getAvg())));
 				}
 			}
 			res.put("links", links);

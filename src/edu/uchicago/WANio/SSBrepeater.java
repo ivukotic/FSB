@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
@@ -19,6 +20,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 @SuppressWarnings("serial")
 public class SSBrepeater extends HttpServlet {
@@ -44,8 +48,8 @@ public class SSBrepeater extends HttpServlet {
 		link+="&dateTo="+tDate;
 		try {
 			log.warning("loading: "+link);
-			SSB=readJsonFromUrl(link);
-		} catch (JSONException | IOException e) {
+			SSB=getJsonFromUrl(link);
+		} catch (JSONException e) {
 			log.severe("could not reload SSB site info");
 			e.printStackTrace();
 			return;
@@ -89,26 +93,50 @@ public class SSBrepeater extends HttpServlet {
 		
 	}
 	
-	private static String readAll(Reader rd) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		int cp;
-		while ((cp = rd.read()) != -1) {
-			sb.append((char) cp);
-		}
-		return sb.toString();
-	}
+//	private static String readAll(Reader rd) throws IOException {
+//		StringBuilder sb = new StringBuilder();
+//		int cp;
+//		while ((cp = rd.read()) != -1) {
+//			sb.append((char) cp);
+//		}
+//		return sb.toString();
+//	}
 
-	public static JSONObject readJsonFromUrl(String url) throws IOException, JSONException {
-		InputStream is = new URL(url).openStream();
+	
+	
+	private JSONObject getJsonFromUrl(String theURL){
+		log.info("getting data from:"+theURL);
+		URL url;
+		HttpURLConnection request;
+		JSONObject root = null;
 		try {
-			BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
-			String jsonText = readAll(rd);
-			JSONObject json = new JSONObject(jsonText);
-			return json;
-		} finally {
-			is.close();
+			url = new URL(theURL);
+			request = (HttpURLConnection) url.openConnection();
+			request.setConnectTimeout(60);
+		    request.setRequestMethod("POST");
+		    request.setRequestProperty("Accept", "application/json");
+			request.connect();
+			root = new JSONObject(new InputStreamReader((InputStream) request.getContent()));
+			request.disconnect();
+		} catch (IOException | JSONException e) {
+			e.printStackTrace();
 		}
+
+		return root;
 	}
+	
+	
+//	public static JSONObject readJsonFromUrl(String url) throws IOException, JSONException {
+//		InputStream is = new URL(url).openStream();
+//		try {
+//			BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
+//			String jsonText = readAll(rd);
+//			JSONObject json = new JSONObject(jsonText);
+//			return json;
+//		} finally {
+//			is.close();
+//		}
+//	}
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		
